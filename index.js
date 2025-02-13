@@ -5,11 +5,9 @@ require("dotenv").config();
 
 const app = express();
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Helper para tratamento de erros do SQL
 const handleSQLError = (error) => {
   const errorMessages = {};
   let counter = 1;
@@ -38,21 +36,52 @@ const handleSQLError = (error) => {
 
 // Endpoint para criar/atualizar cliente
 app.post("/clientes", async (req, res) => {
-  const { celular, nome, email } = req.body;
+  const { celular, nome, email, assinante, pagtoEmDia } = req.body;
+
+  if (!celular) {
+    return res.status(400).json({
+      error: "O campo 'celular' é obrigatório.",
+      suggestion: "Envie um JSON com o campo 'celular'."
+    });
+  }
 
   try {
     const pool = await poolPromise;
-    const request = pool.request();
     
+    // Verifica se o cliente já existe no banco
+    const checkCliente = await pool.request()
+      .input('Celular', sql.VarChar(20), celular)
+      .query(`SELECT 1 FROM cliente WHERE Celular = @Celular`);
+
+    const clienteExiste = checkCliente.recordset.length > 0;
+
+    // Executa o procedimento armazenado para criar/atualizar o cliente
+    const request = pool.request();
     request.input('Celular', sql.VarChar(20), celular);
     request.input('NomeCli', sql.VarChar(200), nome || '');
     request.input('eMail', sql.VarChar(50), email || '');
+    request.input('Assinante', sql.VarChar(2), assinante || '');
+    request.input('PagtoEmDia', sql.VarChar(2), pagtoEmDia || '');
+    
+    await request.execute('SpGrCliente');
 
-    const result = await request.execute('SpGrCliente');
+    // Busca os dados atualizados do cliente
+    const result = await pool.request()
+      .input('Celular', sql.VarChar(20), celular)
+      .query(`
+        SELECT Celular, NomeCli, eMail, Assinante, PagtoEmDia 
+        FROM cliente 
+        WHERE Celular = @Celular
+      `);
+
+    const clienteAtualizado = result.recordset[0];
+
+    // Define a mensagem com base na existência do cliente
+    const message = clienteExiste ? "Cliente atualizado com sucesso!" : "Cliente criado com sucesso!";
 
     res.status(200).json({
-      message: "Cliente criado/atualizado com sucesso!",
-      data: result.recordset
+      message,
+      data: clienteAtualizado
     });
 
   } catch (error) {
@@ -67,18 +96,36 @@ app.post("/clientes", async (req, res) => {
   }
 });
 
+
 // Endpoint para listar todos os clientes
 app.get("/clientes", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request().query(`
-      SELECT Celular, NomeCli, eMail 
+      SELECT Celular, NomeCli, eMail, Assinante, PagtoEmDia 
       FROM cliente
       ORDER BY NomeCli
     `);
-    
+
+    if (result.recordset.length === 0) {
+      return res.status(200).json({ 
+        message: "Nenhum cliente encontrado!"
+      });
+    }
+
+    const clientes = result.recordset.map(cliente => ({
+      Nome: cliente.NomeCli,
+      Celular: cliente.Celular,
+      Email: cliente.eMail,
+      Assinante: cliente.Assinante,
+      PagtoEmDia: cliente.PagtoEmDia
+    }));
+
+    const message = `Clientes encontrados: ${clientes.length}`;
+
     res.status(200).json({
-      data: result.recordset
+      message: message,
+      data: clientes
     });
 
   } catch (error) {
@@ -94,6 +141,7 @@ app.get("/clientes", async (req, res) => {
 });
 
 
+
 // Endpoint para buscar cliente por celular
 app.get("/cliente/:celular", async (req, res) => {
   try {
@@ -104,16 +152,25 @@ app.get("/cliente/:celular", async (req, res) => {
 
     if (result.recordset.length === 0) {
       return res.status(200).json({ 
-        message: "Cliente não cadastrado!" // Mantendo o padrão da estrutura
+        message: "Cliente não cadastrado!" 
       });
     }
 
     const cliente = result.recordset[0];
-    const message = `Cliente encontrado com sucesso! Nome: ${cliente.NomeCli}, Celular: ${cliente.Celular}, Email: ${cliente.eMail}`;
+
+    const clienteData = {
+      Nome: cliente.NomeCli,
+      Celular: cliente.Celular,
+      Email: cliente.eMail,
+      Assinante: cliente.Assinante,  
+      PagtoEmDia: cliente.PagtoEmDia  
+    };
+
+    const message = `Cliente encontrado com sucesso! Nome: ${clienteData.Nome}, Celular: ${clienteData.Celular}, Email: ${clienteData.Email}, Assinante: ${clienteData.Assinante}, Pagamento em Dia: ${clienteData.PagtoEmDia}`;
 
     res.status(200).json({
       message: message,
-      data: cliente
+      data: clienteData
     });
 
   } catch (error) {
@@ -129,11 +186,11 @@ app.get("/cliente/:celular", async (req, res) => {
 
 
 
+
 // Endpoint para criar/atualizar thread
 app.post("/threads", async (req, res) => {
   const { ThreadId, Celular, Assunto } = req.body;
 
-  // Validação de dados
   if (!ThreadId || !Celular || !Assunto) {
     return res.status(400).json({
       status: "fail",
@@ -146,8 +203,7 @@ app.post("/threads", async (req, res) => {
     const pool = await poolPromise;
     const request = pool.request();
 
-    // Corrigir o nome do parâmetro para que seja exatamente igual ao esperado pela procedure
-    request.input('TreadId', sql.Char(50), ThreadId);  // ALTERADO: 'ThreadId' para 'TreadId'
+    request.input('TreadId', sql.Char(50), ThreadId);  
     request.input('Celular', sql.Char(20), Celular);
     request.input('Assunto', sql.VarChar(200), Assunto);
 
@@ -160,7 +216,7 @@ app.post("/threads", async (req, res) => {
         ThreadId,
         Celular,
         Assunto,
-        resultado: result.recordset  // Inclui o retorno do banco, se houver
+        resultado: result.recordset   
       }
     });
 
@@ -198,8 +254,8 @@ app.get("/threads", async (req, res) => {
 
     const pool = await poolPromise;
     const result = await pool.request()
-      .input('Celular', sql.Char(20), celular) // Parâmetro correto
-      .execute('SpSeThreadIA');               // Procedure correta
+      .input('Celular', sql.Char(20), celular)  
+      .execute('SpSeThreadIA');                
 
     res.status(200).json({
       status: "success",
@@ -228,7 +284,7 @@ app.get("/threads/all", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request()
-      .execute('SpSeThreadIA'); // Executa a procedure sem parâmetros
+      .execute('SpSeThreadIA');  
 
     res.status(200).json({
       status: "success",
@@ -250,7 +306,7 @@ app.get("/threads/all", async (req, res) => {
 // Endpoint para excluir thread
 app.delete("/threads", async (req, res) => {
   try {
-    const { TreadId, Celular } = req.body; // Corrigido para TreadId
+    const { TreadId, Celular } = req.body;  
 
     if (!TreadId) {
       return res.status(400).json({
@@ -266,7 +322,7 @@ app.delete("/threads", async (req, res) => {
     }
 
     const pool = await poolPromise;
-    const request = pool.request().input('TreadId', sql.Char(50), TreadId); // Correção aqui também
+    const request = pool.request().input('TreadId', sql.Char(50), TreadId); 
 
     if (Celular) {
       request.input('Celular', sql.Char(20), Celular);
@@ -274,7 +330,7 @@ app.delete("/threads", async (req, res) => {
 
     await request.execute('SpExThreadIA');
 
-    res.status(204).send(); // Sucesso sem conteúdo
+    res.status(204).send(); 
 
   } catch (error) {
     res.status(400).json({
