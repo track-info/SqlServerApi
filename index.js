@@ -103,7 +103,7 @@ app.get("/clientes", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request().query(`
-      SELECT Celular, NomeCli, eMail, Assinante, PagtoEmDia 
+      SELECT Celular, NomeCli, eMail, Assinante, PagtoEmDia, PrefResp
       FROM cliente
       ORDER BY NomeCli
     `);
@@ -119,7 +119,8 @@ app.get("/clientes", async (req, res) => {
       Celular: cliente.Celular,
       Email: cliente.eMail,
       Assinante: cliente.Assinante,
-      PagtoEmDia: cliente.PagtoEmDia
+      PagtoEmDia: cliente.PagtoEmDia,
+      PrefResp: cliente.PrefResp
     }));
 
     const message = `Clientes encontrados: ${clientes.length}`;
@@ -140,7 +141,6 @@ app.get("/clientes", async (req, res) => {
     });
   }
 });
-
 
 
 // Endpoint para buscar cliente por celular
@@ -164,10 +164,11 @@ app.get("/cliente/:celular", async (req, res) => {
       Celular: cliente.Celular,
       Email: cliente.eMail,
       Assinante: cliente.Assinante,  
-      PagtoEmDia: cliente.PagtoEmDia  
+      PagtoEmDia: cliente.PagtoEmDia,
+      PrefResp: cliente.PrefResp
     };
 
-    const message = `Cliente encontrado com sucesso! Nome: ${clienteData.Nome}, Celular: ${clienteData.Celular}, Email: ${clienteData.Email}, Assinante: ${clienteData.Assinante}, Pagamento em Dia: ${clienteData.PagtoEmDia}`;
+    const message = `Cliente encontrado com sucesso! Nome: ${clienteData.Nome}, Celular: ${clienteData.Celular}, Email: ${clienteData.Email}, Assinante: ${clienteData.Assinante}, Pagamento em Dia: ${clienteData.PagtoEmDia}, Preferência de Resposta: ${clienteData.PrefResp}`;
 
     res.status(200).json({
       message: message,
@@ -184,8 +185,6 @@ app.get("/cliente/:celular", async (req, res) => {
     });
   }
 });
-
-
 
 
 // Endpoint para criar/atualizar thread
