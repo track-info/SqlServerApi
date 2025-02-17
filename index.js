@@ -36,7 +36,7 @@ const handleSQLError = (error) => {
 
 // Endpoint para criar/atualizar cliente
 app.post("/clientes", async (req, res) => {
-  const { celular, nome, email, assinante, pagtoEmDia } = req.body;
+  const { celular, nome, email, assinante, pagtoEmDia, prefResp } = req.body;
 
   if (!celular) {
     return res.status(400).json({
@@ -62,14 +62,15 @@ app.post("/clientes", async (req, res) => {
     request.input('eMail', sql.VarChar(50), email || '');
     request.input('Assinante', sql.VarChar(2), assinante || '');
     request.input('PagtoEmDia', sql.VarChar(2), pagtoEmDia || '');
-    
+    request.input('PrefResp', sql.Char(1), prefResp || '');
+
     await request.execute('SpGrCliente');
 
     // Busca os dados atualizados do cliente
     const result = await pool.request()
       .input('Celular', sql.VarChar(20), celular)
       .query(`
-        SELECT Celular, NomeCli, eMail, Assinante, PagtoEmDia 
+        SELECT Celular, NomeCli, eMail, Assinante, PagtoEmDia, PrefResp
         FROM cliente 
         WHERE Celular = @Celular
       `);
