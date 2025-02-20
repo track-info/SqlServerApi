@@ -58,7 +58,8 @@ app.post("/clientes", async (req, res) => {
 
     const result = await request.execute('SpGrCliente');
 
-    const clienteAtualizado = result.recordset[0];
+    // Verificando se o recordset está vazio ou indefinido
+    const clienteAtualizado = result.recordset && result.recordset.length > 0 ? result.recordset[0] : null;
 
     const message = clienteAtualizado && clienteAtualizado.NomeCli ? "Cliente atualizado com sucesso!" : "Cliente criado com sucesso!";
 
