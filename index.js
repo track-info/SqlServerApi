@@ -52,8 +52,8 @@ app.post("/clientes", async (req, res) => {
     request.input('Celular', sql.VarChar(20), celular);
     request.input('NomeCli', sql.VarChar(200), nome || '');
     request.input('eMail', sql.VarChar(50), email || '');
-    request.input('Assinante', sql.VarChar(2), assinante || '');
-    request.input('PagtoEmDia', sql.VarChar(2), pagtoEmDia || '');
+    request.input('Assinante', sql.VarChar(3), assinante || '');
+    request.input('PagtoEmDia', sql.VarChar(3), pagtoEmDia || '');
     request.input('PrefResp', sql.VarChar(5), prefResp || '');
 
     const result = await request.execute('SpGrCliente');
