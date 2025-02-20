@@ -47,38 +47,20 @@ app.post("/clientes", async (req, res) => {
 
   try {
     const pool = await poolPromise;
-    
-    // Verifica se o cliente já existe no banco
-    const checkCliente = await pool.request()
-      .input('Celular', sql.VarChar(20), celular)
-      .query(`SELECT 1 FROM cliente WHERE Celular = @Celular`);
-
-    const clienteExiste = checkCliente.recordset.length > 0;
-
-    // Executa o procedimento armazenado para criar/atualizar o cliente
     const request = pool.request();
+    
     request.input('Celular', sql.VarChar(20), celular);
     request.input('NomeCli', sql.VarChar(200), nome || '');
     request.input('eMail', sql.VarChar(50), email || '');
     request.input('Assinante', sql.VarChar(2), assinante || '');
     request.input('PagtoEmDia', sql.VarChar(2), pagtoEmDia || '');
-    request.input('PrefResp', sql.Char(1), prefResp || '');
+    request.input('PrefResp', sql.VarChar(5), prefResp || '');
 
-    await request.execute('SpGrCliente');
-
-    // Busca os dados atualizados do cliente
-    const result = await pool.request()
-      .input('Celular', sql.VarChar(20), celular)
-      .query(`
-        SELECT Celular, NomeCli, eMail, Assinante, PagtoEmDia, PrefResp
-        FROM cliente 
-        WHERE Celular = @Celular
-      `);
+    const result = await request.execute('SpGrCliente');
 
     const clienteAtualizado = result.recordset[0];
 
-    // Define a mensagem com base na existência do cliente
-    const message = clienteExiste ? "Cliente atualizado com sucesso!" : "Cliente criado com sucesso!";
+    const message = clienteAtualizado && clienteAtualizado.NomeCli ? "Cliente atualizado com sucesso!" : "Cliente criado com sucesso!";
 
     res.status(200).json({
       message,
@@ -102,32 +84,17 @@ app.post("/clientes", async (req, res) => {
 app.get("/clientes", async (req, res) => {
   try {
     const pool = await poolPromise;
-    const result = await pool.request().query(`
-      SELECT Celular, NomeCli, eMail, Assinante, PagtoEmDia, PrefResp
-      FROM cliente
-      ORDER BY NomeCli
-    `);
+    const result = await pool.request().execute("SpSeCliente");
 
     if (result.recordset.length === 0) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         message: "Nenhum cliente encontrado!"
       });
     }
 
-    const clientes = result.recordset.map(cliente => ({
-      Nome: cliente.NomeCli,
-      Celular: cliente.Celular,
-      Email: cliente.eMail,
-      Assinante: cliente.Assinante,
-      PagtoEmDia: cliente.PagtoEmDia,
-      PrefResp: cliente.PrefResp
-    }));
-
-    const message = `Clientes encontrados: ${clientes.length}`;
-
     res.status(200).json({
-      message: message,
-      data: clientes
+      message: `Clientes encontrados: ${result.recordset.length}`,
+      data: result.recordset // Retornando diretamente sem mapear novamente
     });
 
   } catch (error) {
@@ -181,6 +148,36 @@ app.get("/cliente/:celular", async (req, res) => {
     
     res.status(400).json({
       error: "Erro na busca",
+      details: process.env.NODE_ENV === 'development' ? errorMessages : undefined
+    });
+  }
+});
+
+
+// Endpoint para excluir cliente por celular
+app.delete("/cliente/:celular", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('Celular', sql.VarChar(15), req.params.celular)
+      .execute('SpExCliente');
+
+    if (result.rowsAffected[0] === 0) {
+      return res.status(200).json({ 
+        message: "Cliente não encontrado ou já excluído!" 
+      });
+    }
+
+    res.status(200).json({
+      message: "Cliente excluído com sucesso!"
+    });
+
+  } catch (error) {
+    const errorMessages = handleSQLError(error);
+    console.error("Erro SQL:", errorMessages);
+    
+    res.status(400).json({
+      error: "Erro na exclusão",
       details: process.env.NODE_ENV === 'development' ? errorMessages : undefined
     });
   }
