@@ -58,14 +58,23 @@ app.post("/clientes", async (req, res) => {
 
     const result = await request.execute('SpGrCliente');
 
-    // Verificando se o recordset está vazio ou indefinido
-    const clienteAtualizado = result.recordset && result.recordset.length > 0 ? result.recordset[0] : null;
+    // Verificar se o recordset retornou dados
+    const cliente = result.recordset && result.recordset.length > 0 ? result.recordset[0] : null;
 
-    const message = clienteAtualizado && clienteAtualizado.NomeCli ? "Cliente atualizado com sucesso!" : "Cliente criado com sucesso!";
+    // Mensagem flexível baseada na presença de dados
+    const message = cliente ? "Cliente atualizado com sucesso!" : "Cliente criado com sucesso!";
 
+    // Retornar a resposta
     res.status(200).json({
       message,
-      data: clienteAtualizado
+      data: cliente ? {
+        Celular: cliente.Celular,
+        NomeCli: cliente.NomeCli,
+        eMail: cliente.eMail,
+        Assinante: cliente.Assinante,
+        PagtoEmDia: cliente.PagtoEmDia,
+        PrefResp: cliente.PrefResp
+      } : null
     });
 
   } catch (error) {
