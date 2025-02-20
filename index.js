@@ -47,34 +47,43 @@ app.post("/clientes", async (req, res) => {
 
   try {
     const pool = await poolPromise;
-    const request = pool.request();
     
+    // Verifica se o cliente já existe no banco
+    const checkCliente = await pool.request()
+      .input('Celular', sql.VarChar(20), celular)
+      .query(`SELECT 1 FROM cliente WHERE Celular = @Celular`);
+      //.query(`SpSe1Cliente @Celular`);
+
+    const clienteExiste = checkCliente.recordset.length > 0;
+
+    // Executa o procedimento armazenado para criar/atualizar o cliente
+    const request = pool.request();
     request.input('Celular', sql.VarChar(20), celular);
     request.input('NomeCli', sql.VarChar(200), nome || '');
     request.input('eMail', sql.VarChar(50), email || '');
     request.input('Assinante', sql.VarChar(3), assinante || '');
     request.input('PagtoEmDia', sql.VarChar(3), pagtoEmDia || '');
-    request.input('PrefResp', sql.VarChar(5), prefResp || '');
+    request.input('PrefResp', sql.Char(5), prefResp || '');
 
-    const result = await request.execute('SpGrCliente');
+    await request.execute('SpGrCliente');
 
-    // Verificar se o recordset retornou dados
-    const cliente = result.recordset && result.recordset.length > 0 ? result.recordset[0] : null;
+    // Busca os dados atualizados do cliente
+    const result = await pool.request()
+      .input('Celular', sql.VarChar(20), celular)
+      .query(`
+        SELECT Celular, NomeCli, eMail, Assinante, PagtoEmDia, PrefResp
+        FROM cliente 
+        WHERE Celular = @Celular
+      `);
 
-    // Mensagem flexível baseada na presença de dados
-    const message = cliente ? "Cliente atualizado com sucesso!" : "Cliente criado com sucesso!";
+    const clienteAtualizado = result.recordset[0];
 
-    // Retornar a resposta
+    // Define a mensagem com base na existência do cliente
+    const message = clienteExiste ? "Cliente atualizado com sucesso!" : "Cliente criado com sucesso!";
+
     res.status(200).json({
       message,
-      data: cliente ? {
-        Celular: cliente.Celular,
-        NomeCli: cliente.NomeCli,
-        eMail: cliente.eMail,
-        Assinante: cliente.Assinante,
-        PagtoEmDia: cliente.PagtoEmDia,
-        PrefResp: cliente.PrefResp
-      } : null
+      data: clienteAtualizado
     });
 
   } catch (error) {
@@ -126,7 +135,7 @@ app.get("/cliente/:celular", async (req, res) => {
     const pool = await poolPromise;
     const result = await pool.request()
       .input('Celular', sql.VarChar(15), req.params.celular)
-      .execute('spse1cliente');
+      .execute('SpSe1Cliente');
 
     if (result.recordset.length === 0) {
       return res.status(200).json({ 
