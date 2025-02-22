@@ -135,7 +135,7 @@ app.get("/cliente/:celular", async (req, res) => {
     const pool = await poolPromise;
     const result = await pool.request()
       .input('Celular', sql.VarChar(15), req.params.celular)
-      .execute('SpSe1Cliente');
+      .execute('spse1cliente');
 
     if (result.recordset.length === 0) {
       return res.status(200).json({ 
@@ -198,6 +198,36 @@ app.delete("/cliente/:celular", async (req, res) => {
     res.status(400).json({
       error: "Erro na exclusão",
       details: process.env.NODE_ENV === 'development' ? errorMessages : undefined
+    });
+  }
+});
+
+
+// Endpoint para listar os prompts
+app.get("/prompt", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().execute("SpSe1ComandoAtu");
+
+    if (result.recordset.length === 0) {
+      return res.status(200).json({
+        message: "Nenhum prompt encontrado!"
+      });
+    }
+
+    res.status(200).json({
+      message: `Prompts encontrados: ${result.recordset.length}`,
+      data: result.recordset  
+    });
+
+  } catch (error) {
+    const errorMessages = handleSQLError(error);
+    console.error("Erro SQL:", errorMessages);
+
+    res.status(500).json({
+      error: "Erro ao listar os prompts",
+      details: process.env.NODE_ENV === 'development' ? errorMessages : undefined,
+      suggestion: "Tente novamente mais tarde"
     });
   }
 });
