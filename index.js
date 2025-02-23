@@ -48,15 +48,12 @@ app.post("/clientes", async (req, res) => {
   try {
     const pool = await poolPromise;
     
-    // Verifica se o cliente já existe no banco
     const checkCliente = await pool.request()
       .input('Celular', sql.VarChar(20), celular)
       .query(`SELECT 1 FROM cliente WHERE Celular = @Celular`);
-      //.query(`SpSe1Cliente @Celular`);
 
     const clienteExiste = checkCliente.recordset.length > 0;
 
-    // Executa o procedimento armazenado para criar/atualizar o cliente
     const request = pool.request();
     request.input('Celular', sql.VarChar(20), celular);
     request.input('NomeCli', sql.VarChar(200), nome || '');
@@ -67,7 +64,6 @@ app.post("/clientes", async (req, res) => {
 
     await request.execute('SpGrCliente');
 
-    // Busca os dados atualizados do cliente
     const result = await pool.request()
       .input('Celular', sql.VarChar(20), celular)
       .query(`
@@ -78,7 +74,6 @@ app.post("/clientes", async (req, res) => {
 
     const clienteAtualizado = result.recordset[0];
 
-    // Define a mensagem com base na existência do cliente
     const message = clienteExiste ? "Cliente atualizado com sucesso!" : "Cliente criado com sucesso!";
 
     res.status(200).json({
@@ -113,7 +108,7 @@ app.get("/clientes", async (req, res) => {
 
     res.status(200).json({
       message: `Clientes encontrados: ${result.recordset.length}`,
-      data: result.recordset // Retornando diretamente sem mapear novamente
+      data: result.recordset
     });
 
   } catch (error) {
@@ -203,6 +198,49 @@ app.delete("/cliente/:celular", async (req, res) => {
 });
 
 
+// Endpoint para gravar os prompts
+app.post("/prompt", async (req, res) => {
+  const { prompt, instrupadrao, obs } = req.body;
+
+  if (!prompt || !instrupadrao || !obs) {
+    return res.status(400).json({
+      error: "Os campos 'prompt', 'instrupadrao' e 'obs' são obrigatórios.",
+      suggestion: "Envie um JSON com os campos obrigatórios preenchidos."
+    });
+  }
+
+  try {
+    const pool = await poolPromise;
+    const request = pool.request();
+
+    request.input("Prompt", sql.VarChar(max), prompt);
+    request.input("InstruPadrao", sql.VarChar(max), instrupadrao);
+    request.input("Obs", sql.VarChar(max), obs);
+
+    await request.execute("SpGrComandoIA");
+
+    res.status(201).json({
+      message: "Prompt cadastrado com sucesso!",
+      data: {
+        prompt,
+        instrupadrao,
+        obs
+      }
+    });
+
+  } catch (error) {
+    const errorMessages = handleSQLError(error);
+    console.error("Erro SQL:", errorMessages);
+
+    res.status(500).json({
+      error: "Erro ao cadastrar o prompt",
+      details: process.env.NODE_ENV === 'development' ? errorMessages : undefined,
+      suggestion: "Verifique os dados enviados e tente novamente"
+    });
+  }
+});
+
+
 // Endpoint para listar os prompts
 app.get("/prompt", async (req, res) => {
   try {
@@ -228,6 +266,51 @@ app.get("/prompt", async (req, res) => {
       error: "Erro ao listar os prompts",
       details: process.env.NODE_ENV === 'development' ? errorMessages : undefined,
       suggestion: "Tente novamente mais tarde"
+    });
+  }
+});
+
+
+// Endpoint para registrar custos de tokens
+app.post("/tokens", async (req, res) => {
+  const { celular, prefResp, pergunta, resposta } = req.body;
+
+  if (!celular || !prefResp || !pergunta || !resposta) {
+    return res.status(400).json({
+      error: "Os campos 'celular', 'prefResp', 'pergunta' e 'resposta' são obrigatórios.",
+      suggestion: "Envie um JSON com os campos obrigatórios preenchidos."
+    });
+  }
+
+  try {
+    const pool = await poolPromise;
+    const request = pool.request();
+
+    request.input("Celular", sql.VarChar(20), celular);
+    request.input("PrefResp", sql.Char(1), prefResp);
+    request.input("Pergunta", sql.VarChar(500), pergunta);
+    request.input("Resposta", sql.VarChar(500), resposta);
+
+    await request.execute("SpContaTokens");
+
+    res.status(201).json({
+      message: "Registro de tokens salvo com sucesso!",
+      data: {
+        celular,
+        prefResp,
+        pergunta,
+        resposta
+      }
+    });
+
+  } catch (error) {
+    const errorMessages = handleSQLError(error);
+    console.error("Erro SQL:", errorMessages);
+
+    res.status(500).json({
+      error: "Erro ao registrar o custo dos tokens",
+      details: process.env.NODE_ENV === 'development' ? errorMessages : undefined,
+      suggestion: "Verifique os dados enviados e tente novamente"
     });
   }
 });
