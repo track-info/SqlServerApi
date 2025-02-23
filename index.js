@@ -287,7 +287,7 @@ app.post("/tokens", async (req, res) => {
     const request = pool.request();
 
     request.input("Celular", sql.VarChar(20), celular);
-    request.input("PrefResp", sql.Char(5), prefResp);
+    request.input("PrefResp", sql.VarChar(5), prefResp);
     request.input("Pergunta", sql.VarChar(500), pergunta);
     request.input("Resposta", sql.VarChar(500), resposta);
 
