@@ -213,8 +213,8 @@ app.post("/prompt", async (req, res) => {
     const pool = await poolPromise;
     const request = pool.request();
 
-    request.input("Prompt", sql.VarChar(max), prompt);
-    request.input("InstruPadrao", sql.VarChar(max), instrupadrao);
+    request.input("PromptIA", sql.VarChar(max), promptIA);
+    request.input("InstrPadrao", sql.VarChar(max), instruPadrao);
     request.input("Obs", sql.VarChar(max), obs);
 
     await request.execute("SpGrComandoIA");
