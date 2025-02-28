@@ -273,11 +273,11 @@ app.get("/prompt", async (req, res) => {
 
 // Endpoint para registrar custos de tokens
 app.post("/tokens", async (req, res) => {
-  const { celular, prefResp, pergunta, resposta } = req.body;
+  const { celular, prefResp, pergunta, resposta, nomeIA, dolarCota } = req.body;
 
-  if (!celular || !prefResp || !pergunta || !resposta) {
+  if (!celular || !prefResp || !pergunta || !resposta || !nomeIA || !dolarCota) {
     return res.status(400).json({
-      error: "Os campos 'celular', 'prefResp', 'pergunta' e 'resposta' são obrigatórios.",
+      error: "Os campos 'celular', 'prefResp', 'pergunta', 'resposta', 'nomeIA' e 'dolarCota' são obrigatórios.",
       suggestion: "Envie um JSON com os campos obrigatórios preenchidos."
     });
   }
@@ -286,10 +286,12 @@ app.post("/tokens", async (req, res) => {
     const pool = await poolPromise;
     const request = pool.request();
 
-    request.input("Celular", sql.VarChar(20), celular);
-    request.input("PrefResp", sql.VarChar(5), prefResp);
-    request.input("Pergunta", sql.VarChar(500), pergunta);
-    request.input("Resposta", sql.VarChar(500), resposta);
+    request.input("Celular", sql.Char(20), celular);
+    request.input("PrefResp", sql.Char(5), prefResp);
+    request.input("Pergunta", sql.NVarChar(sql.MAX), pergunta);
+    request.input("Resposta", sql.NVarChar(sql.MAX), resposta);
+    request.input("NomeIA", sql.Char(30), nomeIA);
+    request.input("DolarCota", sql.Decimal(10, 6), dolarCota);
 
     await request.execute("SpContaTokens");
 
@@ -299,7 +301,9 @@ app.post("/tokens", async (req, res) => {
         celular,
         prefResp,
         pergunta,
-        resposta
+        resposta,
+        nomeIA,
+        dolarCota
       }
     });
 
