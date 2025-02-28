@@ -322,8 +322,9 @@ app.post("/tokens", async (req, res) => {
 
 // Endpoint para registrar controle financeiro
 app.post("/financeiro", async (req, res) => {
-  const { celular, codOper, linhaPix, invoiceNumber, codPacote } = req.body;
+  const { celular, codOper, dataOper, linhaPix, invoiceNumber, codPacote } = req.body;
 
+  // Validação: Campos obrigatórios (LinhaPix e DataOper são opcionais)
   if (!celular || !codOper || !invoiceNumber || !codPacote) {
     return res.status(400).json({
       error: "Os campos 'celular', 'codOper', 'invoiceNumber' e 'codPacote' são obrigatórios.",
@@ -338,11 +339,21 @@ app.post("/financeiro", async (req, res) => {
     request.input("Celular", sql.VarChar(20), celular);
     request.input("CodOper", sql.Int, codOper);
     
-    if (linhaPix) {
-      request.input("LinhaPix", sql.VarChar(512), linhaPix);
+    // DataOper pode ser NULL
+    if (dataOper) {
+      request.input("DataOper", sql.DateTime, dataOper);
+    } else {
+      request.input("DataOper", sql.Null);
     }
 
-    request.input("InvoiceNumber", sql.Int, invoiceNumber);
+    // LinhaPix é opcional
+    if (linhaPix) {
+      request.input("LinhaPix", sql.VarChar(255), linhaPix);
+    } else {
+      request.input("LinhaPix", sql.Null);
+    }
+
+    request.input("InvoiceNumber", sql.VarChar(50), invoiceNumber);
     request.input("CodPacote", sql.Int, codPacote);
 
     await request.execute("SpGrControleFinanc");
@@ -352,7 +363,8 @@ app.post("/financeiro", async (req, res) => {
       data: {
         celular,
         codOper,
-        linhaPix: linhaPix || null, 
+        dataOper: dataOper || null, // Retorna null se não for enviado
+        linhaPix: linhaPix || null,
         invoiceNumber,
         codPacote
       }
@@ -369,6 +381,7 @@ app.post("/financeiro", async (req, res) => {
     });
   }
 });
+
 
 
 // Endpoint para criar/atualizar thread
