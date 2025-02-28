@@ -320,6 +320,57 @@ app.post("/tokens", async (req, res) => {
 });
 
 
+// Endpoint para registrar controle financeiro
+app.post("/financeiro", async (req, res) => {
+  const { celular, codOper, linhaPix, invoiceNumber, codPacote } = req.body;
+
+  if (!celular || !codOper || !invoiceNumber || !codPacote) {
+    return res.status(400).json({
+      error: "Os campos 'celular', 'codOper', 'invoiceNumber' e 'codPacote' são obrigatórios.",
+      suggestion: "Envie um JSON com os campos obrigatórios preenchidos."
+    });
+  }
+
+  try {
+    const pool = await poolPromise;
+    const request = pool.request();
+
+    request.input("Celular", sql.VarChar(20), celular);
+    request.input("CodOper", sql.Int, codOper);
+    
+    if (linhaPix) {
+      request.input("LinhaPix", sql.VarChar(255), linhaPix);
+    }
+
+    request.input("InvoiceNumber", sql.VarChar(50), invoiceNumber);
+    request.input("CodPacote", sql.Int, codPacote);
+
+    await request.execute("SpGrControleFinanc");
+
+    res.status(201).json({
+      message: "Registro financeiro salvo com sucesso!",
+      data: {
+        celular,
+        codOper,
+        linhaPix: linhaPix || null, 
+        invoiceNumber,
+        codPacote
+      }
+    });
+
+  } catch (error) {
+    const errorMessages = handleSQLError(error);
+    console.error("Erro SQL:", errorMessages);
+
+    res.status(500).json({
+      error: "Erro ao registrar o controle financeiro",
+      details: process.env.NODE_ENV === 'development' ? errorMessages : undefined,
+      suggestion: "Verifique os dados enviados e tente novamente"
+    });
+  }
+});
+
+
 // Endpoint para criar/atualizar thread
 app.post("/threads", async (req, res) => {
   const { ThreadId, Celular, Assunto } = req.body;
