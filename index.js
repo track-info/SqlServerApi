@@ -339,10 +339,10 @@ app.post("/financeiro", async (req, res) => {
     request.input("CodOper", sql.Int, codOper);
     
     if (linhaPix) {
-      request.input("LinhaPix", sql.VarChar(255), linhaPix);
+      request.input("LinhaPix", sql.VarChar(512), linhaPix);
     }
 
-    request.input("InvoiceNumber", sql.VarChar(50), invoiceNumber);
+    request.input("InvoiceNumber", sql.Int, invoiceNumber);
     request.input("CodPacote", sql.Int, codPacote);
 
     await request.execute("SpGrControleFinanc");
