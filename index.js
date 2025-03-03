@@ -397,7 +397,7 @@ app.post("/financeiro", async (req, res) => {
 
 
 // Endpoint para listar os pacotes padrões
-app.get("/pacote-padrao", async (req, res) => {
+app.get("/pacotes/padrao", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request().execute("SpSePacotePadrao");
@@ -427,7 +427,7 @@ app.get("/pacote-padrao", async (req, res) => {
 
 
 // Endpoint para listar pacotes filtrando por palavra-chave
-app.get("/pacotes-chave", async (req, res) => {
+app.get("/pacotes/palavra-chave", async (req, res) => {
   try {
     const { palavraChave } = req.query; 
     const pool = await poolPromise;
