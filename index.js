@@ -396,6 +396,73 @@ app.post("/financeiro", async (req, res) => {
 });
 
 
+// Endpoint para listar os pacotes padrões
+app.get("/pacote-padrao", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().execute("SpSePacotePadrao");
+
+    if (result.recordset.length === 0) {
+      return res.status(200).json({
+        message: "Nenhum pacote encontrado!"
+      });
+    }
+
+    res.status(200).json({
+      message: `Pacote encontrado: ${result.recordset.length}`,
+      data: result.recordset
+    });
+
+  } catch (error) {
+    const errorMessages = handleSQLError(error);
+    console.error("Erro SQL:", errorMessages);
+
+    res.status(500).json({
+      error: "Erro ao lista pacote",
+      details: process.env.NODE_ENV === 'development' ? errorMessages : undefined,
+      suggestion: "Tente novamente mais tarde"
+    });
+  }
+});
+
+
+// Endpoint para listar pacotes filtrando por palavra-chave
+app.get("/pacotes-chave", async (req, res) => {
+  try {
+    const { palavraChave } = req.query; 
+    const pool = await poolPromise;
+    const request = pool.request();
+
+    if (palavraChave) {
+      request.input("PalavraChave", sql.VarChar(255), palavraChave);
+    }
+
+    const result = await request.execute("SpSePacoteChave");
+
+    if (result.recordset.length === 0) {
+      return res.status(200).json({
+        message: "Nenhum pacote encontrado!"
+      });
+    }
+
+    res.status(200).json({
+      message: `Pacotes palavra-chave encontrados: ${result.recordset.length}`,
+      data: result.recordset
+    });
+
+  } catch (error) {
+    const errorMessages = handleSQLError(error);
+    console.error("Erro SQL:", errorMessages);
+
+    res.status(500).json({
+      error: "Erro ao listar pacotes",
+      details: process.env.NODE_ENV === 'development' ? errorMessages : undefined,
+      suggestion: "Tente novamente mais tarde"
+    });
+  }
+});
+
+
 
 // Endpoint para criar/atualizar thread
 app.post("/threads", async (req, res) => {
