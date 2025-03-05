@@ -36,7 +36,7 @@ const handleSQLError = (error) => {
 
 // Endpoint para criar/atualizar cliente
 app.post("/clientes", async (req, res) => {
-  const { celular, nome, email, assinante, pagtoEmDia, prefResp } = req.body;
+  const { celular, nome, email, assinante, pagtoEmDia, prefResp, nomeToolChamadora } = req.body;
 
   if (!celular) {
     return res.status(400).json({
@@ -61,13 +61,14 @@ app.post("/clientes", async (req, res) => {
     request.input('Assinante', sql.VarChar(3), assinante || '');
     request.input('PagtoEmDia', sql.VarChar(3), pagtoEmDia || '');
     request.input('PrefResp', sql.Char(5), prefResp || '');
+    request.input('NomeToolChamadora', sql.Char(30), nomeToolChamadora || '');
 
     await request.execute('SpGrCliente');
 
     const result = await pool.request()
       .input('Celular', sql.VarChar(20), celular)
       .query(`
-        SELECT Celular, NomeCli, eMail, Assinante, PagtoEmDia, PrefResp
+        SELECT Celular, NomeCli, eMail, Assinante, PagtoEmDia, PrefResp, NomeToolChamadora
         FROM cliente 
         WHERE Celular = @Celular
       `);
@@ -149,7 +150,9 @@ app.get("/cliente/:celular", async (req, res) => {
       PrefResp: cliente.PrefResp,
       SaldoTrocaMensTexto: cliente.SaldoTrocaMensTexto,
       SaldoTrocaMensAudio: cliente.SaldoTrocaMensAudio,
-      Validade: cliente.Validade
+      Validade: cliente.Validade,
+      NomeToolChamadora: cliente.NomeToolChamadora
+
     };
 
     const message = `Cliente encontrado com sucesso! Nome: ${clienteData.Nome}, Celular: ${clienteData.Celular}, Email: ${clienteData.Email}, Assinante: ${clienteData.Assinante}, Pagamento em Dia: ${clienteData.PagtoEmDia}, Preferência de Resposta: ${clienteData.PrefResp}, Saldo de Mensagens em Texto: ${cliente.SaldoTrocaMensTexto}, Saldo de Mensagens em Audio: ${cliente.SaldoTrocaMensAudio}, Validade de Mensagens: ${cliente.Validade}`;
