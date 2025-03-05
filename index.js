@@ -36,7 +36,7 @@ const handleSQLError = (error) => {
 
 // Endpoint para criar/atualizar cliente
 app.post("/clientes", async (req, res) => {
-  const { celular, nome, email, assinante, pagtoEmDia, prefResp, nomeToolChamadora } = req.body;
+  const { celular, nome, email, cpf, assinante, pagtoEmDia, prefResp, nomeToolChamadora } = req.body;
 
   if (!celular) {
     return res.status(400).json({
@@ -48,30 +48,28 @@ app.post("/clientes", async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Verifica se o cliente já existe
     const resultCheck = await pool.request()
       .input('Celular', sql.VarChar(20), celular)
       .query("SELECT COUNT(1) AS Existe FROM cliente WHERE Celular = @Celular");
 
     const clienteExiste = resultCheck.recordset[0].Existe > 0;
 
-    // Chama a procedure para criar ou atualizar
     const request = pool.request();
-    request.input('Celular', sql.VarChar(20), celular);
+    request.input('Celular', sql.Char(20), celular);
     request.input('NomeCli', sql.VarChar(200), nome || null);
-    request.input('eMail', sql.VarChar(50), email || null);
-    request.input('Assinante', sql.VarChar(3), assinante || null);
-    request.input('PagtoEmDia', sql.VarChar(3), pagtoEmDia || null);
-    request.input('PrefResp', sql.VarChar(5), prefResp || null);
-    request.input('NomeToolChamadora', sql.VarChar(60), nomeToolChamadora || null);
+    request.input('eMail', sql.Char(50), email || null);
+    request.input('Assinante', sql.Char(3), assinante || null);
+    request.input('PagtoEmDia', sql.Char(3), pagtoEmDia || null);
+    request.input('PrefResp', sql.Char(5), prefResp || null);
+    request.input('NomeToolChamadora', sql.Char(60), nomeToolChamadora || null);
+    request.input('CPF', sql.Char(11), cpf || null);
 
     await request.execute('SpGrCliente');
 
-    // Busca os dados atualizados já na mesma query de verificação
     const result = await pool.request()
       .input('Celular', sql.VarChar(20), celular)
       .query(`
-        SELECT Celular, NomeCli, eMail, Assinante, PagtoEmDia, PrefResp, NomeToolChamadora
+        SELECT Celular, NomeCli, CPF, eMail, Assinante, PagtoEmDia, PrefResp, NomeToolChamadora
         FROM cliente 
         WHERE Celular = @Celular
       `);
