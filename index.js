@@ -47,24 +47,27 @@ app.post("/clientes", async (req, res) => {
 
   try {
     const pool = await poolPromise;
-    
-    const checkCliente = await pool.request()
+
+    // Verifica se o cliente já existe
+    const resultCheck = await pool.request()
       .input('Celular', sql.VarChar(20), celular)
-      .query(`SELECT 1 FROM cliente WHERE Celular = @Celular`);
+      .query("SELECT COUNT(1) AS Existe FROM cliente WHERE Celular = @Celular");
 
-    const clienteExiste = checkCliente.recordset.length > 0;
+    const clienteExiste = resultCheck.recordset[0].Existe > 0;
 
+    // Chama a procedure para criar ou atualizar
     const request = pool.request();
     request.input('Celular', sql.VarChar(20), celular);
-    request.input('NomeCli', sql.VarChar(200), nome || '');
-    request.input('eMail', sql.VarChar(50), email || '');
-    request.input('Assinante', sql.VarChar(3), assinante || '');
-    request.input('PagtoEmDia', sql.VarChar(3), pagtoEmDia || '');
-    request.input('PrefResp', sql.Char(5), prefResp || '');
-    request.input('NomeToolChamadora', sql.Char(30), nomeToolChamadora || '');
+    request.input('NomeCli', sql.VarChar(200), nome || null);
+    request.input('eMail', sql.VarChar(50), email || null);
+    request.input('Assinante', sql.VarChar(3), assinante || null);
+    request.input('PagtoEmDia', sql.VarChar(3), pagtoEmDia || null);
+    request.input('PrefResp', sql.VarChar(5), prefResp || null);
+    request.input('NomeToolChamadora', sql.VarChar(30), nomeToolChamadora || null);
 
     await request.execute('SpGrCliente');
 
+    // Busca os dados atualizados já na mesma query de verificação
     const result = await pool.request()
       .input('Celular', sql.VarChar(20), celular)
       .query(`
@@ -85,14 +88,15 @@ app.post("/clientes", async (req, res) => {
   } catch (error) {
     const errorMessages = handleSQLError(error);
     console.error("Erro SQL:", errorMessages);
-    
-    res.status(400).json({
+
+    res.status(500).json({
       error: "Erro ao processar a requisição",
       details: process.env.NODE_ENV === 'development' ? errorMessages : undefined,
       suggestion: "Verifique os dados enviados e tente novamente"
     });
   }
 });
+
 
 
 // Endpoint para listar todos os clientes
