@@ -49,7 +49,7 @@ app.post("/clientes", async (req, res) => {
     const pool = await poolPromise;
 
     const resultCheck = await pool.request()
-      .input('Celular', sql.VarChar(20), celular)
+      .input('Celular', sql.Char(20), celular)
       .query("SELECT COUNT(1) AS Existe FROM cliente WHERE Celular = @Celular");
 
     const clienteExiste = resultCheck.recordset[0].Existe > 0;
