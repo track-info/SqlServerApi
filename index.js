@@ -63,7 +63,7 @@ app.post("/clientes", async (req, res) => {
     request.input('Assinante', sql.VarChar(3), assinante || null);
     request.input('PagtoEmDia', sql.VarChar(3), pagtoEmDia || null);
     request.input('PrefResp', sql.VarChar(5), prefResp || null);
-    request.input('NomeToolChamadora', sql.VarChar(30), nomeToolChamadora || null);
+    request.input('NomeToolChamadora', sql.VarChar(60), nomeToolChamadora || null);
 
     await request.execute('SpGrCliente');
 
