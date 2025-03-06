@@ -34,9 +34,10 @@ const handleSQLError = (error) => {
   return errorMessages;
 };
 
+
 // Endpoint para criar/atualizar cliente
 app.post("/clientes", async (req, res) => {
-  const { celular, nome, email, cpf, assinante, pagtoEmDia, prefResp, nomeToolChamadora } = req.body;
+  const { celular, nome, email, assinante, pagtoEmDia, prefResp, nomeToolChamadora } = req.body;
 
   if (!celular) {
     return res.status(400).json({
@@ -47,36 +48,25 @@ app.post("/clientes", async (req, res) => {
 
   try {
     const pool = await poolPromise;
-
-    const resultCheck = await pool.request()
-      .input('Celular', sql.Char(20), celular)
-      .query("SELECT COUNT(1) AS Existe FROM cliente WHERE Celular = @Celular");
-
-    const clienteExiste = resultCheck.recordset[0].Existe > 0;
-
     const request = pool.request();
-    request.input('Celular', sql.Char(20), celular);
-    request.input('NomeCli', sql.VarChar(200), nome || null);
-    request.input('CPF', sql.Char(11), cpf || null);
-    request.input('eMail', sql.Char(50), email || null);
-    request.input('Assinante', sql.Char(3), assinante || null);
-    request.input('PagtoEmDia', sql.Char(3), pagtoEmDia || null);
-    request.input('PrefResp', sql.Char(5), prefResp || null);
-    request.input('NomeToolChamadora', sql.Char(60), nomeToolChamadora || null);
+    
+    // Parâmetros para a procedure
+    request.input('Celular', sql.VarChar(20), celular);
+    request.input('NomeCli', sql.VarChar(200), nome || '');
+    request.input('eMail', sql.VarChar(50), email || '');
+    request.input('Assinante', sql.VarChar(2), assinante || '');
+    request.input('PagtoEmDia', sql.VarChar(2), pagtoEmDia || '');
+    request.input('PrefResp', sql.VarChar(5), prefResp || '');
+    request.input('NomeToolChamadora', sql.VarChar(60), nomeToolChamadora || '');
 
-    await request.execute('SpGrCliente');
+    // Executa a procedure e retorna os dados atualizados diretamente
+    const result = await request.execute('SpGrCliente');
 
-    const result = await pool.request()
-      .input('Celular', sql.VarChar(20), celular)
-      .query(`
-        SELECT Celular, NomeCli, CPF, eMail, Assinante, PagtoEmDia, PrefResp, NomeToolChamadora
-        FROM cliente 
-        WHERE Celular = @Celular
-      `);
-
+    // Extrai os dados atualizados da procedure
     const clienteAtualizado = result.recordset[0];
 
-    const message = clienteExiste ? "Cliente atualizado com sucesso!" : "Cliente criado com sucesso!";
+    // Determina se foi criação ou atualização
+    const message = clienteAtualizado && clienteAtualizado.NomeCli ? "Cliente atualizado com sucesso!" : "Cliente criado com sucesso!";
 
     res.status(200).json({
       message,
@@ -86,15 +76,14 @@ app.post("/clientes", async (req, res) => {
   } catch (error) {
     const errorMessages = handleSQLError(error);
     console.error("Erro SQL:", errorMessages);
-
-    res.status(500).json({
+    
+    res.status(400).json({
       error: "Erro ao processar a requisição",
       details: process.env.NODE_ENV === 'development' ? errorMessages : undefined,
       suggestion: "Verifique os dados enviados e tente novamente"
     });
   }
 });
-
 
 
 // Endpoint para listar todos os clientes
