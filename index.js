@@ -37,7 +37,7 @@ const handleSQLError = (error) => {
 
 // Endpoint para criar/atualizar cliente
 app.post("/clientes", async (req, res) => {
-  const { celular, nome, email, assinante, pagtoEmDia, prefResp, nomeToolChamadora } = req.body;
+  const { celular, nome, cpf, email, assinante, pagtoEmDia, prefResp, nomeToolChamadora } = req.body;
 
   if (!celular) {
     return res.status(400).json({
@@ -53,6 +53,7 @@ app.post("/clientes", async (req, res) => {
     // Parâmetros para a procedure
     request.input('Celular', sql.VarChar(20), celular);
     request.input('NomeCli', sql.VarChar(200), nome || '');
+    request.input('CPF', sql.VarChar(11), cpf || '');
     request.input('eMail', sql.VarChar(50), email || '');
     request.input('Assinante', sql.VarChar(3), assinante || '');
     request.input('PagtoEmDia', sql.VarChar(3), pagtoEmDia || '');
