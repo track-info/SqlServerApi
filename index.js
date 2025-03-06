@@ -35,7 +35,7 @@ const handleSQLError = (error) => {
 };
 
 
-// Endpoint para criar/atualizar cliente
+//endpoint criar/atualizar cliente
 app.post("/clientes", async (req, res) => {
   const { celular, nome, cpf, email, assinante, pagtoEmDia, prefResp, nomeToolChamadora } = req.body;
 
@@ -48,9 +48,15 @@ app.post("/clientes", async (req, res) => {
 
   try {
     const pool = await poolPromise;
+
+    const checkRequest = pool.request();
+    checkRequest.input('Celular', sql.VarChar(20), celular);
+    const checkQuery = 'SELECT * FROM Cliente WHERE Celular = @Celular';
+    const checkResult = await checkRequest.query(checkQuery);
+
+    const clienteExiste = checkResult.recordset && checkResult.recordset[0];
+
     const request = pool.request();
-    
-    // Parâmetros para a procedure
     request.input('Celular', sql.VarChar(20), celular);
     request.input('NomeCli', sql.VarChar(200), nome || '');
     request.input('CPF', sql.VarChar(11), cpf || '');
@@ -60,18 +66,27 @@ app.post("/clientes", async (req, res) => {
     request.input('PrefResp', sql.VarChar(5), prefResp || '');
     request.input('NomeToolChamadora', sql.VarChar(60), nomeToolChamadora || '');
 
-    // Executa a procedure e retorna os dados atualizados diretamente
-    const result = await request.execute('SpGrCliente');
+    await request.execute('SpGrCliente');
 
-    // Extrai os dados atualizados da procedure
-    const clienteAtualizado = result.recordset[0];
+    const selectRequest = pool.request();
+    selectRequest.input('Celular', sql.VarChar(20), celular);
+    const selectQuery = 'SELECT * FROM Cliente WHERE Celular = @Celular';
+    const selectResult = await selectRequest.query(selectQuery);
 
-    // Determina se foi criação ou atualização
-    const message = clienteAtualizado && clienteAtualizado.NomeCli ? "Cliente atualizado com sucesso!" : "Cliente criado com sucesso!";
+    const cliente = selectResult.recordset && selectResult.recordset[0];
+
+    if (!cliente) {
+      return res.status(500).json({
+        error: "Erro ao buscar os dados do cliente após a operação.",
+        suggestion: "Verifique se o procedimento armazenado foi executado corretamente."
+      });
+    }
+
+    const message = clienteExiste ? "Cliente atualizado com sucesso!" : "Cliente criado com sucesso!";
 
     res.status(200).json({
       message,
-      data: clienteAtualizado
+      data: cliente
     });
 
   } catch (error) {
@@ -143,9 +158,7 @@ app.get("/cliente/:celular", async (req, res) => {
       PrefResp: cliente.PrefResp,
       SaldoTrocaMensTexto: cliente.SaldoTrocaMensTexto,
       SaldoTrocaMensAudio: cliente.SaldoTrocaMensAudio,
-      Validade: cliente.Validade,
-      NomeToolChamadora: cliente.NomeToolChamadora
-
+      Validade: cliente.Validade
     };
 
     const message = `Cliente encontrado com sucesso! Nome: ${clienteData.Nome}, Celular: ${clienteData.Celular}, CPF: ${clienteData.CPF}, Email: ${clienteData.Email}, Assinante: ${clienteData.Assinante}, Pagamento em Dia: ${clienteData.PagtoEmDia}, Preferência de Resposta: ${clienteData.PrefResp}, Saldo de Mensagens em Texto: ${cliente.SaldoTrocaMensTexto}, Saldo de Mensagens em Audio: ${cliente.SaldoTrocaMensAudio}, Validade de Mensagens: ${cliente.Validade}`;
