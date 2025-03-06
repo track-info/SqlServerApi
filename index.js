@@ -57,12 +57,12 @@ app.post("/clientes", async (req, res) => {
     const request = pool.request();
     request.input('Celular', sql.Char(20), celular);
     request.input('NomeCli', sql.VarChar(200), nome || null);
+    request.input('CPF', sql.Char(11), cpf || null);
     request.input('eMail', sql.Char(50), email || null);
     request.input('Assinante', sql.Char(3), assinante || null);
     request.input('PagtoEmDia', sql.Char(3), pagtoEmDia || null);
     request.input('PrefResp', sql.Char(5), prefResp || null);
     request.input('NomeToolChamadora', sql.Char(60), nomeToolChamadora || null);
-    request.input('CPF', sql.Char(11), cpf || null);
 
     await request.execute('SpGrCliente');
 
