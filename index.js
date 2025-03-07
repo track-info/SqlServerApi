@@ -353,8 +353,8 @@ app.post("/financeiro", async (req, res) => {
     request.input('CodPacote', sql.Int, codPacote);
     request.input('DataOper', sql.SmallDateTime, dataOper || '');
     request.input('LinhaPix', sql.VarChar(512), linhaPix || '');
-    request.input('DataCriaPix', sql.SmallDateTime, dataCriaPix || '');
-    request.input('DataRecPix', sql.SmallDateTime, dataRecPix || '');
+    request.input('DataCriaPix', sql.VarChar(20), dataCriaPix || '');
+    request.input('DataRecPix', sql.VarChar(20), dataRecPix || '');
 
     await request.execute("SpGrControleFinanc");
 
