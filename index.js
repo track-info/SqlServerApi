@@ -347,34 +347,14 @@ app.post("/financeiro", async (req, res) => {
     const pool = await poolPromise;
     const request = pool.request();
 
-    request.input("Celular", sql.VarChar(20), celular);
-    request.input("CodOper", sql.Int, codOper);
-    request.input("InvoiceNumber", sql.VarChar(50), invoiceNumber);
-    request.input("CodPacote", sql.Int, codPacote);
-
-    if (dataOper) {
-      request.input("DataOper", sql.SmallDateTime, dataOper);
-    } else {
-      request.input("DataOper", sql.Null);
-    }
-
-    if (linhaPix) {
-      request.input("LinhaPix", sql.VarChar(255), linhaPix);
-    } else {
-      request.input("LinhaPix", sql.Null);
-    }
-
-    if (dataCriaPix) {
-      request.input("DataCriaPix", sql.SmallDateTime, dataCriaPix);
-    } else {
-      request.input("DataCriaPix", sql.Null);
-    }
-
-    if (dataRecPix) {
-      request.input("DataRecPix", sql.SmallDateTime, dataRecPix);
-    } else {
-      request.input("DataRecPix", sql.Null);
-    }
+    request.input('Celular', sql.VarChar(20), celular);
+    request.input('CodOper', sql.Int, codOper);
+    request.input('InvoiceNumber', sql.Int, invoiceNumber);
+    request.input('CodPacote', sql.Int, codPacote);
+    request.input('DataOper', sql.SmallDateTime, dataOper || '');
+    request.input('LinhaPix', sql.VarChar(512), linhaPix || '');
+    request.input('DataCriaPix', sql.SmallDateTime, dataCriaPix || '');
+    request.input('DataRecPix', sql.SmallDateTime, dataRecPix || '');
 
     await request.execute("SpGrControleFinanc");
 
