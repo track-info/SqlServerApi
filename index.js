@@ -78,7 +78,7 @@ app.post("/clientes", async (req, res) => {
 
 
 // Endpoint para listar todos os clientes
-app.get("/clientes", async (req, res) => {
+app.get("/clientes/all", async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request().execute("SpSeCliente");
