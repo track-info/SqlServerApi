@@ -161,7 +161,7 @@ app.get("/cliente/:celular", async (req, res) => {
       Validade: cliente.Validade
     };
 
-    const message = `Cliente encontrado com sucesso! Nome: ${clienteData.Nome}, Celular: ${clienteData.Celular}, CPF: ${clienteData.CPF}, Email: ${clienteData.Email}`;
+    const message = `Cliente encontrado com sucesso! Nome: ${clienteData.Nome}, Celular: ${clienteData.Celular}, CPF: ${clienteData.CPF}, Email: ${clienteData.Email}, Assinante: ${clienteData.Assinante}, Recarga em Dia: ${clienteData.PagtoEmDia}, Preferência de Resposta: ${clienteData.PrefResp}, Saldo de Mensagens em Texto: ${cliente.SaldoTrocaMensTexto}, Saldo de Mensagens em Audio: ${cliente.SaldoTrocaMensAudio}, Validade de Mensagens: ${cliente.Validade}`;
 
     res.status(200).json({
       message: message,
