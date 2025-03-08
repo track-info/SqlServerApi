@@ -35,7 +35,7 @@ const handleSQLError = (error) => {
 };
 
 
-// Endpoint criar/atualizar cliente
+// 🟢 Endpoint criar/atualizar cliente
 app.post("/clientes", async (req, res) => {
   const { celular, nome, cpf, email, assinante, pagtoEmDia, prefResp, nomeToolChamadora } = req.body;
 
@@ -77,7 +77,7 @@ app.post("/clientes", async (req, res) => {
 
 
 
-// Endpoint para listar todos os clientes
+// 🟢 Endpoint para listar todos os clientes
 app.get("/clientes/all", async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -107,7 +107,7 @@ app.get("/clientes/all", async (req, res) => {
 });
 
 
-// Endpoint para buscar cliente por celular
+// 🟢 Endpoint para buscar cliente por celular
 app.get("/cliente/:celular", async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -155,7 +155,7 @@ app.get("/cliente/:celular", async (req, res) => {
 });
 
 
-// Endpoint para excluir cliente por celular
+// 🟢 Endpoint para excluir cliente por celular
 app.delete("/cliente/:celular", async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -185,7 +185,7 @@ app.delete("/cliente/:celular", async (req, res) => {
 });
 
 
-// Endpoint para gravar os prompts
+// 🟢 Endpoint para gravar os prompts
 app.post("/prompt", async (req, res) => {
   const { prompt, instrupadrao, obs } = req.body;
 
@@ -228,7 +228,7 @@ app.post("/prompt", async (req, res) => {
 });
 
 
-// Endpoint para listar os prompts
+// 🟢 Endpoint para listar os prompts
 app.get("/prompt", async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -258,7 +258,7 @@ app.get("/prompt", async (req, res) => {
 });
 
 
-// Endpoint para registrar custos de tokens
+// 🟢 Endpoint para registrar custos de tokens
 app.post("/tokens", async (req, res) => {
   const { celular, prefResp, pergunta, resposta, nomeIA, dolarCota } = req.body;
 
@@ -307,9 +307,9 @@ app.post("/tokens", async (req, res) => {
 });
 
 
-// Endpoint para registrar controle financeiro
+// 🟢 Endpoint para registrar controle financeiro
 app.post("/financeiro", async (req, res) => {
-  const { celular, codOper, dataOper, linhaPix, invoiceNumber, codPacote, dataCriaPix, dataRecPix } = req.body;
+  const { celular, codOper, dataOper, linhaPix, invoiceNumber, codPacote, dataCriaPix, dataRecPix, nomeToolChamadora } = req.body;
 
   if (!celular || !codOper || !invoiceNumber || !codPacote) {
     return res.status(400).json({
@@ -330,6 +330,7 @@ app.post("/financeiro", async (req, res) => {
     request.input('LinhaPix', sql.VarChar(512), linhaPix || '');
     request.input('DataCriaPix', sql.VarChar(20), dataCriaPix || '');
     request.input('DataRecPix', sql.VarChar(20), dataRecPix || '');
+    request.input('NomeToolChamadora', sql.VarChar(60), nomeToolChamadora || '');
 
     await request.execute("SpGrControleFinanc");
 
@@ -343,7 +344,8 @@ app.post("/financeiro", async (req, res) => {
         invoiceNumber,
         codPacote,
         dataCriaPix: dataCriaPix || null,
-        dataRecPix: dataRecPix || null
+        dataRecPix: dataRecPix || null,
+        nomeToolChamadora: nomeToolChamadora || null
       }
     });
 
@@ -360,7 +362,7 @@ app.post("/financeiro", async (req, res) => {
 });
 
 
-// Endpoint para listar os pacotes padrões
+// 🟢 Endpoint para listar os pacotes padrões
 app.get("/pacotes/padrao", async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -390,7 +392,7 @@ app.get("/pacotes/padrao", async (req, res) => {
 });
 
 
-// Endpoint para listar pacotes filtrando por palavra-chave
+// 🟢 Endpoint para listar pacotes filtrando por palavra-chave
 app.get("/pacotes/palavra-chave", async (req, res) => {
   try {
     const { palavraChave } = req.query; 
@@ -428,7 +430,7 @@ app.get("/pacotes/palavra-chave", async (req, res) => {
 
 
 
-// Endpoint para criar/atualizar thread
+// 🟢 Endpoint para criar/atualizar thread
 app.post("/threads", async (req, res) => {
   const { ThreadId, Celular, Assunto } = req.body;
 
@@ -475,7 +477,7 @@ app.post("/threads", async (req, res) => {
 });
 
 
-// Endpoint para buscar thread por celular
+// 🟢 Endpoint para buscar thread por celular
 app.get("/threads", async (req, res) => {
   try {
     const { celular } = req.query;
@@ -520,7 +522,7 @@ app.get("/threads", async (req, res) => {
 });
 
 
-// Endpoint para listar todas as threads
+// 🟢 Endpoint para listar todas as threads
 app.get("/threads/all", async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -544,7 +546,7 @@ app.get("/threads/all", async (req, res) => {
 });
 
 
-// Endpoint para excluir thread
+// 🟢 Endpoint para excluir thread
 app.delete("/threads", async (req, res) => {
   try {
     const { TreadId, Celular } = req.body;  
