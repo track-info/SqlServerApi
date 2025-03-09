@@ -37,7 +37,7 @@ const handleSQLError = (error) => {
 
 // 🟢 Endpoint criar/atualizar cliente
 app.post("/clientes", async (req, res) => {
-  const { celular, nome, cpf, email, assinante, pagtoEmDia, prefResp, nomeToolChamadora } = req.body;
+  const { celular, nome, cpf, email, assinante, pagtoEmDia, prefResp, nomeToolChamadora, nomeAgente } = req.body;
 
   if (!celular) {
     return res.status(400).json({
@@ -58,6 +58,7 @@ app.post("/clientes", async (req, res) => {
     request.input('PagtoEmDia', sql.VarChar(3), pagtoEmDia || '');
     request.input('PrefResp', sql.VarChar(5), prefResp || '');
     request.input('NomeToolChamadora', sql.VarChar(60), nomeToolChamadora || '');
+    request.input('NomeAgente', sql.VarChar(60), nomeAgente || '');
 
     await request.execute('SpGrCliente');
 
@@ -260,7 +261,7 @@ app.get("/prompt", async (req, res) => {
 
 // 🟢 Endpoint para registrar custos de tokens
 app.post("/tokens", async (req, res) => {
-  const { celular, prefResp, pergunta, resposta, nomeIA, dolarCota } = req.body;
+  const { celular, prefResp, pergunta, resposta, nomeIA, dolarCota, nomeToolChamadora, nomeAgente } = req.body;
 
   if (!celular || !prefResp || !pergunta || !resposta || !nomeIA || !dolarCota) {
     return res.status(400).json({
@@ -279,6 +280,8 @@ app.post("/tokens", async (req, res) => {
     request.input("Resposta", sql.NVarChar(sql.MAX), resposta);
     request.input("NomeIA", sql.Char(30), nomeIA);
     request.input("DolarCota", sql.Decimal(10, 6), dolarCota);
+    request.input("NomeAgente", sql.NVarChar(60), nomeAgente);
+    request.input("NomeToolChamadora", sql.NVarChar(60), nomeToolChamadora);
 
     await request.execute("SpContaTokens");
 
@@ -290,7 +293,9 @@ app.post("/tokens", async (req, res) => {
         pergunta,
         resposta,
         nomeIA,
-        dolarCota
+        dolarCota,
+        nomeAgente,
+        nomeToolChamadora
       }
     });
 
@@ -309,7 +314,7 @@ app.post("/tokens", async (req, res) => {
 
 // 🟢 Endpoint para registrar controle financeiro
 app.post("/financeiro", async (req, res) => {
-  const { celular, codOper, dataOper, linhaPix, invoiceNumber, codPacote, dataCriaPix, dataRecPix, nomeToolChamadora } = req.body;
+  const { celular, codOper, dataOper, linhaPix, invoiceNumber, codPacote, dataCriaPix, dataRecPix, nomeAgente, nomeToolChamadora } = req.body;
 
   if (!celular || !codOper || !invoiceNumber || !codPacote) {
     return res.status(400).json({
@@ -331,6 +336,7 @@ app.post("/financeiro", async (req, res) => {
     request.input('DataCriaPix', sql.VarChar(20), dataCriaPix || '');
     request.input('DataRecPix', sql.VarChar(20), dataRecPix || '');
     request.input('NomeToolChamadora', sql.VarChar(60), nomeToolChamadora || '');
+    request.input('NomeAgente', sql.VarChar(60), nomeAgente || '');
 
     await request.execute("SpGrControleFinanc");
 
@@ -345,7 +351,8 @@ app.post("/financeiro", async (req, res) => {
         codPacote,
         dataCriaPix: dataCriaPix || null,
         dataRecPix: dataRecPix || null,
-        nomeToolChamadora: nomeToolChamadora || null
+        nomeToolChamadora: nomeToolChamadora || null,
+        nomeAgente: nomeAgente || null
       }
     });
 
