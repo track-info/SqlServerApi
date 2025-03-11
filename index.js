@@ -108,12 +108,16 @@ app.get("/clientes/all", async (req, res) => {
 });
 
 
-// 🟢 Endpoint para buscar cliente por celular
+/// 🟢 Endpoint para buscar cliente por celular com NomeAgente e NomeToolChamadora
 app.get("/cliente/:celular", async (req, res) => {
   try {
+    const { nomeAgente, nomeToolChamadora } = req.query; // Pega os parâmetros da query string
+
     const pool = await poolPromise;
     const result = await pool.request()
       .input('Celular', sql.VarChar(15), req.params.celular)
+      .input('NomeAgente', sql.VarChar(60), nomeAgente || '') // Se não for enviado, usa string vazia
+      .input('NomeToolChamadora', sql.VarChar(60), nomeToolChamadora || '')
       .execute('spse1cliente');
 
     if (result.recordset.length === 0) {
@@ -137,10 +141,8 @@ app.get("/cliente/:celular", async (req, res) => {
       Validade: cliente.Validade
     };
 
-    const message = `Cliente encontrado com sucesso! Nome: ${clienteData.Nome}, Celular: ${clienteData.Celular}, CPF: ${clienteData.CPF}, Email: ${clienteData.Email}, Assinante: ${clienteData.Assinante}, Recarga em Dia: ${clienteData.PagtoEmDia}, Preferência de Resposta: ${clienteData.PrefResp}, Saldo de Mensagens em Texto: ${cliente.SaldoTrocaMensTexto}, Saldo de Mensagens em Audio: ${cliente.SaldoTrocaMensAudio}, Validade de Mensagens: ${cliente.Validade}`;
-
     res.status(200).json({
-      message: message,
+      message: "Cliente encontrado com sucesso!",
       data: clienteData
     });
 
@@ -154,6 +156,7 @@ app.get("/cliente/:celular", async (req, res) => {
     });
   }
 });
+
 
 
 // 🟢 Endpoint para excluir cliente por celular
