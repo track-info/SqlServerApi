@@ -262,6 +262,35 @@ app.get("/prompt", async (req, res) => {
 });
 
 
+// 🟢 Endpoint para listar os Relatórios
+app.get("/relatorio", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().execute("SpSeDiario");
+
+    if (result.recordset.length === 0) {
+      return res.status(200).json({
+        message: "Nenhum relatório encontrado!"
+      });
+    }
+
+    res.status(200).json({
+      message: `Relatórios encontrados: ${result.recordset.length}`,
+      data: result.recordset  
+    });
+
+  } catch (error) {
+    const errorMessages = handleSQLError(error);
+    console.error("Erro SQL:", errorMessages);
+
+    res.status(500).json({
+      error: "Erro ao listar os Relatórios",
+      details: process.env.NODE_ENV === 'development' ? errorMessages : undefined,
+      suggestion: "Tente novamente mais tarde"
+    });
+  }
+});
+
 // 🟢 Endpoint para registrar custos de tokens
 app.post("/tokens", async (req, res) => {
   const { celular, prefResp, pergunta, resposta, nomeIA, dolarCota, nomeToolChamadora, nomeAgente } = req.body;
