@@ -268,15 +268,15 @@ app.get("/relatorio", async (req, res) => {
     const pool = await poolPromise;
     const result = await pool.request().execute("SpSeDiario");
 
-    if (result.recordset.length === 0) {
+    if (!result.recordsets || result.recordsets.length === 0) {
       return res.status(200).json({
         message: "Nenhum relatório encontrado!"
       });
     }
 
     res.status(200).json({
-      message: `Relatórios encontrados: ${result.recordset.length}`,
-      data: result.recordset  
+      message: `Relatórios encontrados: ${result.recordsets.reduce((acc, rs) => acc + rs.length, 0)}`,
+      data: result.recordsets // Retorna todos os recordsets
     });
 
   } catch (error) {
@@ -290,6 +290,7 @@ app.get("/relatorio", async (req, res) => {
     });
   }
 });
+
 
 // 🟢 Endpoint para registrar custos de tokens
 app.post("/tokens", async (req, res) => {
