@@ -324,7 +324,7 @@ app.get("/relatorio/contatos", async (req, res) => {
 
 // 🟢 Endpoint para registrar custos de tokens
 app.post("/tokens", async (req, res) => {
-  const { celular, prefResp, pergunta, resposta, nomeIA, dolarCota, nomeToolChamadora, nomeAgente } = req.body;
+  const { celular, prefResp, pergunta, resposta, nomeIA, dolarCota, nomeToolChamadora, nomeAgente, intencaoPergunta, focoDialogo } = req.body;
 
   if (!celular || !prefResp || !pergunta || !resposta || !nomeIA || !dolarCota) {
     return res.status(400).json({
@@ -345,6 +345,9 @@ app.post("/tokens", async (req, res) => {
     request.input("DolarCota", sql.Decimal(10, 6), dolarCota);
     request.input("NomeAgente", sql.NVarChar(60), nomeAgente);
     request.input("NomeToolChamadora", sql.NVarChar(60), nomeToolChamadora);
+    request.input("IntencaoPergunta", sql.NVarChar(30), intencaoPergunta);
+    request.input("FocoDialogo", sql.NVarChar(30), focoDialogo);
+
 
     await request.execute("SpContaTokens");
 
@@ -358,7 +361,9 @@ app.post("/tokens", async (req, res) => {
         nomeIA,
         dolarCota,
         nomeAgente,
-        nomeToolChamadora
+        nomeToolChamadora,
+        intencaoPergunta,
+        focoDialogo
       }
     });
 
