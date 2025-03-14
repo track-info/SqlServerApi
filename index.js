@@ -262,7 +262,7 @@ app.get("/prompt", async (req, res) => {
 });
 
 
-// 🟢 Endpoint para listar os Relatórios
+// 🟢 Endpoint para listar os Relatórios (recordsets)
 app.get("/relatorio", async (req, res) => {
   try {
     const pool = await poolPromise;
@@ -285,6 +285,36 @@ app.get("/relatorio", async (req, res) => {
 
     res.status(500).json({
       error: "Erro ao listar os Relatórios",
+      details: process.env.NODE_ENV === 'development' ? errorMessages : undefined,
+      suggestion: "Tente novamente mais tarde"
+    });
+  }
+});
+
+
+// 🟢 Endpoint para listar contatos para enviar relatório
+app.get("/relatorio/contatos", async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().execute("SpSeCelularAdm");
+
+    if (result.recordset.length === 0) {
+      return res.status(200).json({
+        message: "Nenhum contato ADM encontrado!"
+      });
+    }
+
+    res.status(200).json({
+      message: `Contatos ADM encontrados: ${result.recordset.length}`,
+      data: result.recordset  
+    });
+
+  } catch (error) {
+    const errorMessages = handleSQLError(error);
+    console.error("Erro SQL:", errorMessages);
+
+    res.status(500).json({
+      error: "Erro ao listar os contatos",
       details: process.env.NODE_ENV === 'development' ? errorMessages : undefined,
       suggestion: "Tente novamente mais tarde"
     });
