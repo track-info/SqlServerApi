@@ -398,7 +398,7 @@ app.post("/financeiro", async (req, res) => {
     request.input('Celular', sql.VarChar(20), celular);
     request.input('CodOper', sql.Int, codOper);
     request.input('InvoiceNumber', sql.Int, invoiceNumber);
-    request.input('CodPacote', sql.VarChar(5), codPacote);
+    request.input('CodPacote', sql.Char(5), codPacote);
     request.input('DataOper', sql.SmallDateTime, dataOper || '');
     request.input('LinhaPix', sql.VarChar(512), linhaPix || '');
     request.input('DataCriaPix', sql.VarChar(20), dataCriaPix || '');
